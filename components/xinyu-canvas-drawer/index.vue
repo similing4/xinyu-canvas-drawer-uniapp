@@ -1,5 +1,7 @@
 <template>
 	<view>
+		<canvas style="width: 256px;height: 256px;" class="noSeeCanvas" canvas-id="CANVAS_EWM_DRAWER"
+			id="CANVAS_EWM_DRAWER"></canvas>
 		<canvas :style="{width: width + 'px', height: height + 'px'}" class="noSeeCanvas" canvas-id="CANVAS_DRAWER"
 			id="CANVAS_DRAWER"></canvas>
 		<slot :src="src"></slot>
@@ -30,8 +32,10 @@
 		data() {
 			return {
 				id: "CANVAS_DRAWER", //这个ID是死的，不能在页面上使用:canvas-id设置canvas-id否则在小程序中会出现空白canvas问题。
+				ewm_id: "CANVAS_EWM_DRAWER", //这个ID是死的，不能在页面上使用:canvas-id设置canvas-id否则在小程序中会出现空白canvas问题。
 				src: '', //当且仅当draw方法成功调用时此属性才会为canvas当前的url。
 				context: null, //当前canvas对象的CanvasContext对象，在组件加载成功后会自动赋值。
+				context_ewm: null,
 				backgroundColor: "", //背景色，请使用setBackgroundColor方法设置。如果该值为空，则表示该canvas没有画背景色。
 				waitingList: [], //所有待渲染数据。只有在调用draw方法时才会进行渲染。
 				imageCachePool: [] //图片缓存库，存储图片的信息以避免图片的二次加载
@@ -39,6 +43,7 @@
 		},
 		mounted() {
 			this.context = uni.createCanvasContext(this.id, this);
+			this.context_ewm = uni.createCanvasContext(this.ewm_id, this);
 		},
 		methods: {
 			/**
@@ -440,6 +445,43 @@
 							t.data = item.data;
 							recv(t);
 						});
+					else if (item.type == "qrcode")
+						return new Promise(async (recv, recj) => {
+							var config = {
+								x: 0,
+								y: 0,
+								width: 256,
+								height: 256
+							};
+							for (var i in item.data.extraConfig)
+								config[i] = item.data.extraConfig[i];
+							this.context_ewm.clearRect(0, 0, 256, 256);
+							this.context_ewm.setFillStyle("#FFFFFF");
+							this.context_ewm.fillRect(0, 0, 256, 256);
+							(new QRCode(this.context_ewm, config)).makeCode(item.data.text);
+							await new Promise((recv) => {
+								this.context_ewm.draw(true, (ret) => {
+									recv(ret);
+								});
+							});
+							uni.canvasToTempFilePath({
+								x: 0,
+								y: 0,
+								width: 256,
+								height: 256,
+								destWidth: 256,
+								destHeight: 256,
+								canvasId: this.ewm_id,
+								success: (res) => {
+									var ret = JSON.parse(JSON.stringify(item));
+									ret.data.image = res.tempFilePath;
+									recv(ret);
+								},
+								fail(err) {
+									recj(err);
+								}
+							}, this);
+						});
 					else
 						return new Promise((recv, recj) => {
 							recv(JSON.parse(JSON.stringify(item)));
@@ -466,15 +508,8 @@
 						this.context.setFillStyle(item.data.color);
 						this.context.fillRect(item.data.x, item.data.y, item.data.w, item.data.h);
 					} else if (item.type == "qrcode") {
-						var config = {
-							x: item.data.x,
-							y: item.data.y,
-							width: item.data.w,
-							height: item.data.h
-						};
-						for (var i in item.data.extraConfig)
-							config[i] = item.data.extraConfig[i];
-						(new QRCode(this.context, config)).makeCode(item.data.text);
+						this.context.drawImage(item.data.image, item.data.x, item.data.y, item.data.w, item
+							.data.h);
 					} else if (item.type == "custom")
 						item.data(this.context);
 				});

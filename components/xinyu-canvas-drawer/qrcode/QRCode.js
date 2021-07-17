@@ -11,7 +11,7 @@ export default class QRCode {
 		typeNumber: 4,
 		colorDark: "#000000",
 		colorLight: "#ffffff",
-		correctLevel: QRErrorCorrectLevel.H
+		correctLevel: QRErrorCorrectLevel.M
 	};
 	_oQRCode = null;
 	_context = null;
@@ -34,7 +34,7 @@ export default class QRCode {
 			.correctLevel);
 		this._oQRCode.addData(sText);
 		this._oQRCode.make();
-		this.makeImage();
+		return this.makeImage();
 	}
 	/**
 	 * Get the type by string length
@@ -89,39 +89,25 @@ export default class QRCode {
 		var _oContext = this._context
 		var _htOption = this._htOption;
 		var oQRCode = this._oQRCode
+		var padding = 0;
+		if (_htOption.padding)
+			padding = _htOption.padding;
 
 		var nCount = oQRCode.getModuleCount();
-		var nWidth = _htOption.padding ? (_htOption.width - 2 * _htOption.padding) / nCount : _htOption.width /
-			nCount;
-		var nHeight = _htOption.padding ? (_htOption.height - 2 * _htOption.padding) / nCount : _htOption
-			.height / nCount;
-		var nRoundedHeight = Math.round(nHeight);
-		var nRoundedWidth = Math.round(nWidth);
-
+		var nWidth = Math.floor((_htOption.width - 2 * padding) / nCount);
+		var nHeight = Math.floor((_htOption.height - 2 * padding) / nCount);
+		console.log(nWidth,nHeight);
 		for (var row = 0; row < nCount; row++) {
 			for (var col = 0; col < nCount; col++) {
-				var bIsDark = oQRCode.isDark(row, col);
-				var nLeft = _htOption.padding ? col * nWidth + _htOption.padding : col * nWidth;
-				var nTop = _htOption.padding ? row * nHeight + _htOption.padding : row * nHeight;
-				nLeft += _htOption.x;
-				nTop += _htOption.y;
-				_oContext.setStrokeStyle(bIsDark ? _htOption.colorDark : _htOption.colorLight)
-				_oContext.setLineWidth(1)
-				_oContext.setFillStyle(bIsDark ? _htOption.colorDark : _htOption.colorLight)
+				var nLeft = col * nWidth + padding + _htOption.x;
+				var nTop = row * nHeight + padding + _htOption.y;
+				_oContext.setFillStyle(oQRCode.isDark(row, col) ? _htOption.colorDark : _htOption.colorLight)
 				_oContext.fillRect(nLeft, nTop, nWidth, nHeight);
-				_oContext.strokeRect(
-					Math.floor(nLeft) + 0.5,
-					Math.floor(nTop) + 0.5,
-					nRoundedHeight
-				);
-
-				_oContext.strokeRect(
-					Math.ceil(nLeft) - 0.5,
-					Math.ceil(nTop) - 0.5,
-					nRoundedWidth,
-					nRoundedHeight
-				);
 			}
+		}
+		return {
+			width: nWidth * nCount + 2 * padding,
+			height: nHeight * nCount + 2 * padding
 		}
 	}
 }

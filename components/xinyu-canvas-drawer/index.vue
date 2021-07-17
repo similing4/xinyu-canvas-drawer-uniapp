@@ -458,7 +458,7 @@
 							this.context_ewm.clearRect(0, 0, 256, 256);
 							this.context_ewm.setFillStyle("#FFFFFF");
 							this.context_ewm.fillRect(0, 0, 256, 256);
-							(new QRCode(this.context_ewm, config)).makeCode(item.data.text);
+							var rect = (new QRCode(this.context_ewm, config)).makeCode(item.data.text);
 							await new Promise((recv) => {
 								this.context_ewm.draw(true, (ret) => {
 									recv(ret);
@@ -467,10 +467,10 @@
 							uni.canvasToTempFilePath({
 								x: 0,
 								y: 0,
-								width: 256,
-								height: 256,
-								destWidth: 256,
-								destHeight: 256,
+								width: rect.width,
+								height: rect.height,
+								destWidth: rect.width,
+								destHeight: rect.height,
 								canvasId: this.ewm_id,
 								success: (res) => {
 									var ret = JSON.parse(JSON.stringify(item));

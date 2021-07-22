@@ -65,10 +65,11 @@
 			 * @property {Number} y 待绘制的图片左上角的实际画布坐标Y
 			 * @property {Number} w 待绘制的图片在实际画布中的宽度
 			 * @property {Number} h 待绘制的图片在实际画布中的高度
+			 * @property {Boolean} isRound 是否是圆图，该项为真时直径为w，h参数将没有意义
 			 * @example addImage("https://www.baidu.com/img/flexible/logo/pc/result.png",0,0,500,700);
 			 * @return {VueComponent} 当前实例对象，以便链式调用。
 			 */
-			addImage(image, x, y, w, h) {
+			addImage(image, x, y, w, h, isRound) {
 				this.waitingList.push({
 					type: "image",
 					data: {
@@ -76,7 +77,8 @@
 						x,
 						y,
 						w,
-						h
+						h,
+						isRound: !!isRound
 					}
 				});
 				return this;
@@ -458,7 +460,8 @@
 							this.context_ewm.clearRect(0, 0, 256, 256);
 							this.context_ewm.setFillStyle("#FFFFFF");
 							this.context_ewm.fillRect(0, 0, 256, 256);
-							var rect = (new QRCode(this.context_ewm, config)).makeCode(item.data.text);
+							var rect = (new QRCode(this.context_ewm, config)).makeCode(item
+								.data.text);
 							await new Promise((recv) => {
 								this.context_ewm.draw(true, (ret) => {
 									recv(ret);
@@ -493,8 +496,20 @@
 				}
 				list.map((item) => {
 					if (item.type == "image") {
-						this.context.drawImage(item.data.image, item.data.x, item.data.y, item.data.w, item
-							.data.h);
+						if (item.data.isRound) {
+							this.context.save();
+							var r = Math.floor(item.data.w / 2);
+							var d = r * 2;
+							var cx = item.data.x + r;
+							var cy = item.data.y + r;
+							this.context.arc(cx, cy, r, 0, 2 * Math.PI);
+							this.context.fill();
+							this.context.clip();
+							this.context.drawImage(item.data.image, item.data.x, item.data.y, d, d);
+							this.context.restore();
+						} else
+							this.context.drawImage(item.data.image, item.data.x, item.data.y, item.data.w, item
+								.data.h);
 					} else if (item.type == "text") {
 						this.context.setTextBaseline('top')
 						this.context.setFontSize(item.data.size);

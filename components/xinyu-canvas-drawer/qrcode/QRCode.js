@@ -96,12 +96,11 @@ export default class QRCode {
 		var nCount = oQRCode.getModuleCount();
 		var nWidth = Math.floor((_htOption.width - 2 * padding) / nCount);
 		var nHeight = Math.floor((_htOption.height - 2 * padding) / nCount);
-		console.log(nWidth,nHeight);
 		for (var row = 0; row < nCount; row++) {
 			for (var col = 0; col < nCount; col++) {
 				var nLeft = col * nWidth + padding + _htOption.x;
 				var nTop = row * nHeight + padding + _htOption.y;
-				_oContext.setFillStyle(oQRCode.isDark(row, col) ? _htOption.colorDark : _htOption.colorLight)
+				_oContext.fillStyle = (oQRCode.isDark(row, col) ? _htOption.colorDark : _htOption.colorLight);
 				_oContext.fillRect(nLeft, nTop, nWidth, nHeight);
 			}
 		}

@@ -1,6 +1,7 @@
 <template>
 	<view>
 		<!-- #ifdef MP -->
+		<canvas style="width: 256px;height: 256px;" class="CANVAS_TEMP_DRAWER" type="2d"></canvas>
 		<canvas style="width: 256px;height: 256px;" class="CANVAS_EWM_DRAWER" type="2d"></canvas>
 		<canvas :style="{width: width + 'px', height: height + 'px'}" class="CANVAS_DRAWER" type="2d"></canvas>
 		<!-- #endif -->
@@ -37,6 +38,8 @@
 				context: null, //当前canvas对象的Context对象，在组件加载成功后会自动赋值。
 				canvas_ewm: null,
 				context_ewm: null,
+				canvas_temp: null,
+				context_temp: null,
 				backgroundColor: "", //背景色，请使用setBackgroundColor方法设置。如果该值为空，则表示该canvas没有画背景色。
 				waitingList: [] //所有待渲染数据。只有在调用draw方法时才会进行渲染。
 			};
@@ -326,6 +329,13 @@
 						recv();
 					})
 				});
+				await new Promise((recv)=>{
+					uni.createSelectorQuery().in(this).select('.CANVAS_TEMP_DRAWER').node().exec((res) => {
+						this.canvas_temp = res[0].node;
+						this.context_temp = this.canvas_temp.getContext('2d');
+						recv();
+					})
+				});
 				let sid = 1;
 				let list = [];
 				for (let wid = 0; wid < this.waitingList.length; wid++) {
@@ -333,6 +343,18 @@
 					if (item.type == "image") {
 						let ret = JSON.parse(JSON.stringify(item));
 						ret.data.image = await this.loadImage(item.data.image);
+						if (ret.data.isRound) {
+							this.canvas_temp.width = ret.data.w;
+							this.canvas_temp.height = ret.data.h;
+							this.context_temp = this.canvas_temp.getContext("2d");
+							let r = Math.floor(ret.data.w / 2);
+							let d = r * 2;
+							this.context_temp.arc(r, r, r, 0, 2 * Math.PI);
+							this.context_temp.fill();
+							this.context_temp.clip();
+							this.context_temp.drawImage(ret.data.image, 0, 0, d, d);
+							ret.data.image = await this.loadImage(this.canvas_temp.toDataURL());
+						}
 						list.push(ret);
 					} else if (item.type == "custom") {
 						let t = JSON.parse(JSON.stringify(item));
@@ -381,20 +403,7 @@
 				}
 				list.map((item) => {
 					if (item.type == "image") {
-						if (item.data.isRound) {
-							this.context.save();
-							let r = Math.floor(item.data.w / 2);
-							let d = r * 2;
-							let cx = item.data.x + r;
-							let cy = item.data.y + r;
-							this.context.arc(cx, cy, r, 0, 2 * Math.PI);
-							this.context.fill();
-							this.context.clip();
-							this.context.drawImage(item.data.image, item.data.x, item.data.y, d, d);
-							this.context.restore();
-						} else
-							this.context.drawImage(item.data.image, item.data.x, item.data.y, item.data.w, item
-								.data.h);
+						this.context.drawImage(item.data.image, item.data.x, item.data.y, item.data.w, item.data.h);
 					} else if (item.type == "text") {
 						this.context.textBaseline = 'top';
 						this.context.font = item.data.size + 'px sans-serif';
@@ -732,7 +741,11 @@
 				context_ewm: null,
 				backgroundColor: "", //背景色，请使用setBackgroundColor方法设置。如果该值为空，则表示该canvas没有画背景色。
 				waitingList: [], //所有待渲染数据。只有在调用draw方法时才会进行渲染。
+				tempCanvas: null
 			}
+		},
+		mounted(){
+			this.tempCanvas = document.createElement("canvas");
 		},
 		methods: {
 			loadImage(src) {
@@ -886,16 +899,16 @@
 				list.map((item) => {
 					if (item.type == "image") {
 						if (item.data.isRound) {
-							this.context.save();
+							this.tempCanvas.width = item.data.w;
+							this.tempCanvas.height = item.data.h;
+							let context = this.tempCanvas.getContext("2d");
 							let r = Math.floor(item.data.w / 2);
 							let d = r * 2;
-							let cx = item.data.x + r;
-							let cy = item.data.y + r;
-							this.context.arc(cx, cy, r, 0, 2 * Math.PI);
-							this.context.fill();
-							this.context.clip();
-							this.context.drawImage(item.data.image, item.data.x, item.data.y, d, d);
-							this.context.restore();
+							context.arc(r, r, r, 0, 2 * Math.PI);
+							context.fill();
+							context.clip();
+							context.drawImage(item.data.image, 0, 0, d, d);
+							this.context.drawImage(this.tempCanvas, item.data.x, item.data.y, item.data.w, item.data.h);
 						} else
 							this.context.drawImage(item.data.image, item.data.x, item.data.y, item.data.w, item
 								.data.h);
@@ -930,6 +943,7 @@
 </script>
 
 <style scoped>
+	.CANVAS_TEMP_DRAWER,
 	.CANVAS_EWM_DRAWER,
 	.CANVAS_DRAWER {
 		position: fixed;

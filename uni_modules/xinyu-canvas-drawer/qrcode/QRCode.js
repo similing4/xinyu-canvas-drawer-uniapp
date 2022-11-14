@@ -29,12 +29,12 @@ export default class QRCode {
 		this._context = context
 	}
 
-	makeCode(sText) {
+	async makeCode(sText) {
 		this._oQRCode = new QRCodeModel(this._getTypeNumber(sText, this._htOption.correctLevel), this._htOption
 			.correctLevel);
 		this._oQRCode.addData(sText);
 		this._oQRCode.make();
-		return this.makeImage();
+		return await this.makeImage();
 	}
 	/**
 	 * Get the type by string length
@@ -85,7 +85,7 @@ export default class QRCode {
 		return replacedText.length + (replacedText.length != sText ? 3 : 0);
 	}
 
-	makeImage() {
+	async makeImage() {
 		var _oContext = this._context
 		var _htOption = this._htOption;
 		var oQRCode = this._oQRCode
@@ -100,8 +100,9 @@ export default class QRCode {
 			for (var col = 0; col < nCount; col++) {
 				var nLeft = col * nWidth + padding + _htOption.x;
 				var nTop = row * nHeight + padding + _htOption.y;
-				_oContext.fillStyle = (oQRCode.isDark(row, col) ? _htOption.colorDark : _htOption.colorLight);
-				_oContext.fillRect(nLeft, nTop, nWidth, nHeight);
+				await _oContext.setContextProp('fillStyle', oQRCode.isDark(row, col) ? _htOption.colorDark :
+					_htOption.colorLight);
+				await _oContext.callContextMethod('fillRect', [nLeft, nTop, nWidth, nHeight]);
 			}
 		}
 		return {

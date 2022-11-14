@@ -14,7 +14,7 @@
 </template>
 
 <script>
-	import XinyuCanvasDrawer from "@/components/xinyu-canvas-drawer/index.vue";
+	import XinyuCanvasDrawer from "@/uni_modules/xinyu-canvas-drawer/index.vue";
 	export default {
 		data() {
 			return {
@@ -30,6 +30,7 @@
 			uni.showLoading({
 				title: "渲染海报中"
 			});
+			await this.posterRef.init();
 			var img = await this.posterRef
 				.setBackgroundColor("#F4F4F4") //指定渲染图片的背景色
 				.addRect(0, 0, 750, 198, "#FEFEFE") //绘制矩形

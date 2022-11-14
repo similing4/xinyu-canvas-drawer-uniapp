@@ -192,6 +192,7 @@
 				while (true) {
 					if (this.inited)
 						return;
+					await this.refreshRenderJS();
 					await new Promise((t) => setTimeout(t, 200));
 				}
 			},
@@ -341,6 +342,17 @@
 			refreshDataRenderjs(data) {
 				if (data == null)
 					return;
+
+				if (this.canvasRenderJS != null) {
+					if (data.widthRenderJS != this.widthRenderJS || data.heightRenderJS != this.heightRenderJS) {
+						this.canvasRenderJS.width = data.widthRenderJS;
+						this.canvasRenderJS.height = data.heightRenderJS;
+					}
+					this.canvasRenderJS.style.width = this.styleWidthRenderJS + 'px';
+					this.canvasRenderJS.style.height = (this.styleHeightRenderJS == -1 ? window.innerHeight : this
+						.styleHeightRenderJS) + 'px';
+				}
+
 				Object.assign(this, data);
 				this.$nextTick(() => {
 					this.$ownerInstance.callMethod("onRenderCallback", {

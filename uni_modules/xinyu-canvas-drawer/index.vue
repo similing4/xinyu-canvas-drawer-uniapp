@@ -333,6 +333,7 @@
 							let r = Math.floor(d / 2);
 							this.widthTemp = d;
 							this.heightTemp = d;
+							await new Promise((recv) => this.$nextTick(() => recv()));
 							await this.canvas_temp.refreshRenderJS();
 							await this.canvas_temp.callContextMethod('save', []);
 							await this.canvas_temp.callContextMethod('clearRect', [0, 0, d, d]);
@@ -342,7 +343,6 @@
 							await this.canvas_temp.callContextMethod('drawImage', [ret.data.image, 0, 0, d, d]);
 							ret.data.image = await this.canvas_temp.callContextMethod('toDataURL', []);
 							await this.canvas_temp.callContextMethod('restore', []);
-							console.log(ret.data.image)
 						}
 						list.push(ret);
 					} else if (item.type == "custom") {
@@ -360,6 +360,7 @@
 							config[i] = item.data.extraConfig[i];
 						this.widthTemp = 256;
 						this.heightTemp = 256;
+						await new Promise((recv) => this.$nextTick(() => recv()));
 						await this.canvas_temp.refreshRenderJS();
 						await this.canvas_temp.callContextMethod('clearRect', [0, 0, 256, 256]);
 						await this.canvas_temp.setContextProp('fillStyle', "#FFFFFF");

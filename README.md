@@ -1,5 +1,5 @@
 # xinyu-canvas-drawer-uniapp
-uniapp中使用canvas绘制图片的一款组件，可用于海报、分享图等各种图的绘制，多端通用，内聚了所有图片加载处理的过程
+uniapp中使用canvas绘制图片的一款组件，可用于海报、分享图等各种图的绘制，多端通用，内聚了所有图片加载处理的过程。组件由原本的旧版Canvas改为现在的Canvas2D，兼容了微信小程序、APP、网页H5三端，修复了二维码的绘制问题！
 
 # 引入教程：
 在页面中引入组件并注册：
@@ -13,25 +13,22 @@ export default{
 ```
 在页面中使用：
 ```html
-<xinyu-canvas-drawer ref="poster" :width="750" :height="750">
-	<template v-slot="{src}">
-		<image :src="src" style="width: 750rpx;height: 750rpx;"></image>
-	</template>
-</xinyu-canvas-drawer>
+<xinyu-canvas-drawer ref="poster" :width="750" :height="750"></xinyu-canvas-drawer>
+<image :src="src" style="width: 750rpx;height: 750rpx;"></image>
 ```
 
 # 组件介绍
 其中width为待绘制的图片目标宽度，height为目标高度，单位为px。这个尺寸的canvas不会显示在页面上，渲染过程会在页面外部进行。
-slot的部分为待显示的部分，src为渲染的图片，当没有进行渲染操作时src是空字符串，你可以通过src是否为空来判定视图的显示状态
+渲染的图片过程需要通过js部分控制，执行draw方法后的Promise返回的内容为图片的Base64编码，可以通过脚本逻辑控制后续处理~
 
 # 渲染过程
 渲染过程采用链式操作方法，此方法只能在mounted之后运行，因为没有mounted时$refs.poster是undefined：
 ```js
-this.posterRef = this.$refs.poster;
+let posterRef = this.$refs.poster;
 uni.showLoading({
 	title: "渲染海报中"
 });
-var img = await this.posterRef
+this.src = await posterRef
 	.setBackgroundColor("#F4F4F4") //指定渲染图片的背景色
 	.addRect(0, 0, 750, 198, "#FEFEFE") //绘制矩形
 	.addImage(require("@/static/logo.jpg"), 32, 48, 98, 98, true) //绘制圆图片，如果不绘制圆图片最后一个参数可以不传或传false，当最后一个参数为true时圆形的直径为w，h参数将没有意义
@@ -48,10 +45,8 @@ uni.hideLoading();
 # 保存图片
 保存图片过程我已经集成了，只需要通过ref调用即可~
 ```js
-this.posterRef = this.$refs.poster;
-this.posterRef.saveImageToPhotosAlbum();
+this.$refs.poster.saveImageToPhotosAlbum(this.src);
 ```
-注意！只有draw方法await成功之后才可以保存图片！否则保存的会是一片空白！
 
 # 更多
 更多的内容就不细说了。组件中有完整的代码注释哦~ 本代码我会持续更新！

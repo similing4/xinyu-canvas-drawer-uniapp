@@ -1,25 +1,20 @@
 <template>
 	<view>
-		<xinyu-cross-canvas :width="widthTemp" :height="heightTemp" :styleWidth="widthTemp" :styleHeight="heightTemp"
-			ref="CANVAS_DRAWER_TEMP" class="CANVAS_DRAWER"></xinyu-cross-canvas>
-		<xinyu-cross-canvas :width="width" :height="height" :styleWidth="width" :styleHeight="height"
+		<xinyu-cross-canvas :width.sync="widthTemp" :height.sync="heightTemp" :styleWidth="widthTemp"
+			:styleHeight="heightTemp" ref="CANVAS_DRAWER_TEMP" class="CANVAS_DRAWER"></xinyu-cross-canvas>
+		<xinyu-cross-canvas :width.sync="width" :height.sync="height" :styleWidth="width" :styleHeight="height"
 			ref="CANVAS_DRAWER" class="CANVAS_DRAWER"></xinyu-cross-canvas>
-		<slot :src="src"></slot>
 	</view>
 </template>
 <script>
 	/**
 	 * xinyu-canvas-drawer Canvas绘制器
-	 * @description 本组件可用于所有需要进行Canvas绘图的场景。绘制的Canvas组件会被放置到屏幕外面，不会显示在屏幕上。调用draw方法后插槽的src属性会附带绘制完成的图片url，可以进行直接渲染。
+	 * @description 本组件可用于所有需要进行Canvas绘图的场景。绘制的Canvas组件会被放置到屏幕外面，不会显示在屏幕上。调用draw方法后返回值为图片的base64。
 	 * 【注意】本组件需要使用ref调用draw方法并await！
-	 * @property {Number} width 待绘制的实际图片的宽度
-	 * @property {Number} height 待绘制的实际图片的高度
+	 * @property {Number} width 待绘制的实际图片的宽度，不可以中途修改宽度与高度
+	 * @property {Number} height 待绘制的实际图片的高度，不可以中途修改宽度与高度
 	 * @example 
-	 * <xinyu-canvas-drawer ref="poster" :width="750" :height="847">
-			<template v-slot="{src}">
-				<image :src="src" v-if="src != ''" style="width: 750rpx;height: 847rpx;"></image>
-			</template>
-		</xinyu-canvas-drawer>
+	 * <xinyu-canvas-drawer ref="poster" :width="750" :height="847"></xinyu-canvas-drawer>
 	 */
 	import XinyuCrossCanvas from "@/uni_modules/xinyu-cross-canvas/xinyu-cross-canvas.vue";
 	import QRCode from "./qrcode/QRCode.js";
@@ -33,7 +28,6 @@
 			return {
 				widthTemp: 255,
 				heightTemp: 255,
-				src: '', //当且仅当draw方法成功调用时此属性才会为canvas当前的url。
 				canvas: null, //当前canvas对象在组件加载成功后会自动赋值。
 				canvas_temp: null,
 				backgroundColor: "", //背景色，请使用setBackgroundColor方法设置。如果该值为空，则表示该canvas没有画背景色。
@@ -308,10 +302,6 @@
 					});
 				});
 			},
-			//解决小程序编译器报错的问题
-			toJSON() {
-				//console.log(arguments);
-			},
 			async loadImage(src) {
 				return await this.canvas.loadImage(src);
 			},
@@ -326,15 +316,13 @@
 				let list = [];
 				for (let wid = 0; wid < this.waitingList.length; wid++) {
 					let item = this.waitingList[wid];
+					console.log(item);
 					if (item.type == "image") {
 						let ret = JSON.parse(JSON.stringify(item));
 						if (ret.data.isRound) {
 							let d = Math.min(ret.data.w, ret.data.h);
 							let r = Math.floor(d / 2);
-							this.widthTemp = d;
-							this.heightTemp = d;
-							await new Promise((recv) => this.$nextTick(() => recv()));
-							await this.canvas_temp.refreshRenderJS();
+							await this.canvas_temp.refreshWidthHeight(d, d);
 							await this.canvas_temp.callContextMethod('save', []);
 							await this.canvas_temp.callContextMethod('clearRect', [0, 0, d, d]);
 							await this.canvas_temp.callContextMethod('arc', [r, r, r, 0, 2 * Math.PI]);
@@ -358,15 +346,15 @@
 						};
 						for (let i in item.data.extraConfig)
 							config[i] = item.data.extraConfig[i];
-						this.widthTemp = 256;
-						this.heightTemp = 256;
-						await new Promise((recv) => this.$nextTick(() => recv()));
-						await this.canvas_temp.refreshRenderJS();
+						await this.canvas_temp.refreshWidthHeight(256, 256);
 						await this.canvas_temp.callContextMethod('clearRect', [0, 0, 256, 256]);
 						await this.canvas_temp.setContextProp('fillStyle', "#FFFFFF");
 						await this.canvas_temp.callContextMethod('fillRect', [0, 0, 256, 256]);
-						await (new QRCode(this.canvas_temp, config)).makeCode(item.data.text);
+						let wh = await (new QRCode(this.canvas_temp, config)).calcCode(item.data.text);
+						await this.canvas_temp.refreshWidthHeight(wh.width, wh.height);
+						await this.canvas_temp.callContextMethod('clearRect', [0, 0, 256, 256]);
 						let ret = JSON.parse(JSON.stringify(item));
+						await (new QRCode(this.canvas_temp, config)).makeCode(item.data.text);
 						ret.data.image = await this.canvas_temp.callContextMethod('toDataURL', []);
 						list.push(ret);
 					} else
@@ -405,19 +393,51 @@
 					} else if (item.type == "custom")
 						await item.data(this.canvas);
 				};
-				this.src = await this.canvas.callContextMethod('toDataURL', []);
+				return await this.canvas.callContextMethod('toDataURL', []);
 			},
 			/**
 			 * saveImageToPhotosAlbum方法
 			 * @description 本方法用于将本实例的src保存到本地相册种。
-			 * @example saveImageToPhotosAlbum();
+			 * @example saveImageToPhotosAlbum(src);
 			 * @return {Promise} 返回Promise对象，当发生错误时该方法会throw错误，请务必使用try catch来捕获！
 			 */
-			saveImageToPhotosAlbum() {
+			saveImageToPhotosAlbum(src) {
 				// #ifndef H5
-				return new Promise((recv, recj) => {
+				return new Promise(async (recv, recj) => {
+					// #ifdef MP-WEIXIN
+					if (src.startsWith("data:image")) {
+						let base64 = src.substring(src.indexOf(",") + 1);
+						let tmpFile = wx.env.USER_DATA_PATH + "/" + Date.now() + ".png";
+						await new Promise((recv1) => {
+							uni.getFileSystemManager().writeFile({
+								filePath: tmpFile,
+								data: base64,
+								encoding: 'base64',
+								success: recv1
+							})
+						});
+						src = tmpFile;
+					}
+					// #endif
+					// #ifdef APP-PLUS
+					if (src.startsWith("data:image")) {
+						const url = "_doc/" + Date.now() + ".png";
+						const bitmap = new plus.nativeObj.Bitmap("base64");
+						await new Promise((recv1) => bitmap.loadBase64Data(src, recv1));
+						await new Promise((recv1) => bitmap.save(url, {
+							overwrite: true
+						}, () => {
+							bitmap.clear();
+							recv1();
+						}, () => {
+							bitmap.clear();
+							recj();
+						}));
+						src = url;
+					}
+					// #endif
 					uni.saveImageToPhotosAlbum({
-						filePath: this.src,
+						filePath: src,
 						success: () => {
 							recv();
 						},
@@ -429,7 +449,7 @@
 				// #endif
 				// #ifdef H5
 				return new Promise((recv, recj) => {
-					let base64 = this.src;
+					let base64 = src;
 					let arr = base64.split(',');
 					let bytes = atob(arr[1]);
 					let ab = new ArrayBuffer(bytes.length);

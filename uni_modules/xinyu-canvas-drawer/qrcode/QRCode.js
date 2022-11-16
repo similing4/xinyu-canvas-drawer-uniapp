@@ -34,7 +34,15 @@ export default class QRCode {
 			.correctLevel);
 		this._oQRCode.addData(sText);
 		this._oQRCode.make();
-		return await this.makeImage();
+		return await this.makeImage(true);
+	}
+
+	async calcCode(sText) {
+		this._oQRCode = new QRCodeModel(this._getTypeNumber(sText, this._htOption.correctLevel), this._htOption
+			.correctLevel);
+		this._oQRCode.addData(sText);
+		this._oQRCode.make();
+		return await this.makeImage(false);
 	}
 	/**
 	 * Get the type by string length
@@ -85,7 +93,7 @@ export default class QRCode {
 		return replacedText.length + (replacedText.length != sText ? 3 : 0);
 	}
 
-	async makeImage() {
+	async makeImage(needDraw) {
 		var _oContext = this._context
 		var _htOption = this._htOption;
 		var oQRCode = this._oQRCode
@@ -96,14 +104,22 @@ export default class QRCode {
 		var nCount = oQRCode.getModuleCount();
 		var nWidth = Math.floor((_htOption.width - 2 * padding) / nCount);
 		var nHeight = Math.floor((_htOption.height - 2 * padding) / nCount);
-		for (var row = 0; row < nCount; row++) {
-			for (var col = 0; col < nCount; col++) {
-				var nLeft = col * nWidth + padding + _htOption.x;
-				var nTop = row * nHeight + padding + _htOption.y;
-				await _oContext.setContextProp('fillStyle', oQRCode.isDark(row, col) ? _htOption.colorDark :
-					_htOption.colorLight);
-				await _oContext.callContextMethod('fillRect', [nLeft, nTop, nWidth, nHeight]);
+		if (needDraw) {
+			let list = [];
+			for (var row = 0; row < nCount; row++) {
+				for (var col = 0; col < nCount; col++) {
+					var nLeft = col * nWidth + padding + _htOption.x;
+					var nTop = row * nHeight + padding + _htOption.y;
+					list.push({
+						fillStyle: oQRCode.isDark(row, col) ? _htOption.colorDark : _htOption.colorLight,
+						x: nLeft,
+						y: nTop,
+						w: nWidth,
+						h: nHeight
+					});
+				}
 			}
+			await _oContext.fillRectList(list);
 		}
 		return {
 			width: nWidth * nCount + 2 * padding,

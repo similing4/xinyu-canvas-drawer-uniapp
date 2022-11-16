@@ -1,10 +1,7 @@
 <template>
 	<view>
-		<xinyu-canvas-drawer ref="poster" :width="750" :height="750">
-			<template v-slot="{src}">
-				<image :src="src" style="width: 750rpx;height: 750rpx;"></image>
-			</template>
-		</xinyu-canvas-drawer>
+		<xinyu-canvas-drawer ref="poster" :width="750" :height="750"></xinyu-canvas-drawer>
+		<image :src="src" style="width: 750rpx;height: 750rpx;" v-if="src != ''"></image>
 		<view class="bottomButton fixedBottom">
 			<view class="button" @click="saveImageToPhotosAlbum">
 				下载海报
@@ -19,22 +16,23 @@
 		data() {
 			return {
 				isCanvasLoading: false,
-				posterRef: null
+				src: ''
 			}
 		},
 		components: {
 			XinyuCanvasDrawer
 		},
 		async mounted() {
-			this.posterRef = this.$refs.poster;
+			let posterRef = this.$refs.poster;
 			uni.showLoading({
 				title: "渲染海报中"
 			});
-			await this.posterRef.init();
-			var img = await this.posterRef
+			await posterRef.init();
+			this.src = await posterRef
 				.setBackgroundColor("#F4F4F4") //指定渲染图片的背景色
 				.addRect(0, 0, 750, 198, "#FEFEFE") //绘制矩形
-				.addImage(require("@/static/logo.jpg"), 32, 48, 98, 98, true) //绘制圆图片，如果不绘制圆图片最后一个参数可以不传或传false，当最后一个参数为true时圆形的直径为w，h参数将没有意义
+				.addImage(require("@/static/logo.jpg"), 32, 48, 98, 98,
+				true) //绘制圆图片，如果不绘制圆图片最后一个参数可以不传或传false，当最后一个参数为true时圆形的直径为w，h参数将没有意义
 				.addQRCode("http://www.shengxinyustudio.com", 585, 22, 130, 130) //绘制二维码（不要太长否则会扫不出来）
 				.addText("扫码查看我的主页", 581, 159, 20, "#333333") //绘制文本
 				.addImage(require("@/static/logo.jpg"), 19, 219, 707, 451) //绘制云端图片时第一个参数直接传云端图片地址即可，不需要require。注意不要跨域
@@ -43,18 +41,36 @@
 				.draw();
 			this.isCanvasLoading = true;
 			uni.hideLoading();
+			this.$forceUpdate();
 		},
 		methods: {
+			alert(msg) {
+				return new Promise((recv, recj) => {
+					uni.showModal({
+						title: '提示',
+						content: msg,
+						success(res) {
+							if (res.confirm) {
+								return recv();
+							} else if (res.cancel) {
+								return recj();
+							}
+						}
+					});
+				});
+			},
 			saveImageToPhotosAlbum() {
 				if (!this.isCanvasLoading)
 					return this.alert("稍安勿躁，图片还没有加载完哦~");
-				this.posterRef.saveImageToPhotosAlbum();
+				let posterRef = this.$refs.poster;
+				posterRef.saveImageToPhotosAlbum(this.src);
+				this.alert("保存成功"); 
 			}
 		}
 	}
 </script>
 <style>
-	page{
+	page {
 		background-color: #F4F4F4;
 	}
 </style>

@@ -79,6 +79,26 @@
 			// #endif
 		},
 		methods: {
+			async refreshWidthHeight(width, height) {
+				this.$emit("input:width", width);
+				this.$emit("input:height", height);
+				// #ifdef MP
+				if (this.canvas) {
+					this.canvas.width = width;
+					this.canvas.height = height;
+				}
+				// #endif
+				// #ifndef MP
+				await new Promise((recv) => {
+					this.renderjsData = this.generateObject({
+						widthRenderJS: width,
+						heightRenderJS: height
+					});
+					this.recvMethod.refreshRenderJSCallback = recv;
+				});
+				delete this.recvMethod.refreshRenderJSCallback;
+				// #endif
+			},
 			generateObject(obj) {
 				obj.__ = Date.now() + "_" + this.currentGenerateIndex++;
 				return obj;
@@ -231,6 +251,13 @@
 				});
 			},
 			async refreshRenderJS() {
+				// #ifdef MP
+				if (this.canvas && (this.canvas.width != this.width || this.canvas.height != this.height)) {
+					this.canvas.width = this.width;
+					this.canvas.height = this.height;
+				}
+				// #endif
+				// #ifndef MP
 				await new Promise((recv) => {
 					this.renderjsData = this.generateObject({
 						styleWidthRenderJS: this.styleWidth == -1 ? uni.upx2px(750) : uni.upx2px(this
@@ -243,6 +270,7 @@
 					this.recvMethod.refreshRenderJSCallback = recv;
 				});
 				delete this.recvMethod.refreshRenderJSCallback;
+				// #endif
 			},
 			async setContextProp(key, val) {
 				// #ifdef MP
@@ -266,13 +294,32 @@
 				if (methodName == "toDataURL") {
 					return this.canvas.toDataURL.apply(this.canvas, methodParams);
 				}
-				this.context[methodName].apply(this.context, methodParams);
+				return this.context[methodName].apply(this.context, methodParams);
 				// #endif
 				// #ifndef MP
 				let ret = await new Promise((recv) => {
 					this.renderjsContextMethodCall = this.generateObject({
 						methodName,
 						methodParams
+					});
+					this.recvMethod.callContextMethodCallback = recv;
+				});
+				delete this.recvMethod.callContextMethodCallback;
+				return ret;
+				// #endif
+			},
+			async fillRectList(rectList) {
+				// #ifdef MP
+				for (let i in rectList) {
+					this.context.fillStyle = rectList[i].fillStyle;
+					this.context.fillRect(rectList[i].x, rectList[i].y, rectList[i].w, rectList[i].h);
+				}
+				// #endif
+				// #ifndef MP
+				let ret = await new Promise((recv) => {
+					this.renderjsContextMethodCall = this.generateObject({
+						methodName: "fillRectList",
+						methodParams: [rectList]
 					});
 					this.recvMethod.callContextMethodCallback = recv;
 				});
@@ -362,13 +409,16 @@
 				});
 			},
 			async loadImageRenderjs(src) {
-				await this.loadRenderJSImageCache(src);
+				if (src != null)
+					await this.loadRenderJSImageCache(src);
 				this.$ownerInstance.callMethod("onRenderCallback", {
 					func: "loadImageRenderJSCallback",
 					param: null
 				});
 			},
 			async loadRenderJSImageCache(src) {
+				if (src.startsWith("/"))
+					src = "." + src;
 				return await new Promise((recv) => {
 					if (this.getImageHashRenderjs(src))
 						return recv(this.getImageHashRenderjs(src));
@@ -401,6 +451,12 @@
 					ret = this.contextRenderJS.drawImage.apply(this.contextRenderJS, param);
 				} else if (prop.methodName == "toDataURL") {
 					ret = this.canvasRenderJS.toDataURL.apply(this.canvasRenderJS, prop.methodParams);
+				} else if (prop.methodName == "fillRectList") {
+					let rectList = prop.methodParams[0];
+					for (let i in rectList) {
+						this.contextRenderJS.fillStyle = rectList[i].fillStyle;
+						this.contextRenderJS.fillRect(rectList[i].x, rectList[i].y, rectList[i].w, rectList[i].h);
+					}
 				} else
 					ret = this.contextRenderJS[prop.methodName].apply(this.contextRenderJS, prop.methodParams);
 				this.$ownerInstance.callMethod("onRenderCallback", {

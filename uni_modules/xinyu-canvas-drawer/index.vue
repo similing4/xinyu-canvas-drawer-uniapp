@@ -16,7 +16,7 @@
 	 * @example 
 	 * <xinyu-canvas-drawer ref="poster" :width="750" :height="847"></xinyu-canvas-drawer>
 	 */
-	import XinyuCrossCanvas from "@/uni_modules/xinyu-cross-canvas/xinyu-cross-canvas.vue";
+	import XinyuCrossCanvas from "./xinyu-cross-canvas/xinyu-cross-canvas.vue";
 	import QRCode from "./qrcode/QRCode.js";
 	export default {
 		name: 'xinyu-canvas-drawer',

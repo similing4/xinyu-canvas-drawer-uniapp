@@ -4,7 +4,7 @@ uniapp中使用canvas绘制图片的一款组件，可用于海报、分享图�
 # 引入教程：
 在页面中引入组件并注册：
 ```js
-import XinyuCanvasDrawer from "@/components/xinyu-canvas-drawer/index.vue";
+import XinyuCanvasDrawer from "@/uni_modules/xinyu-canvas-drawer/index.vue";
 export default{
 	components: {
 		XinyuCanvasDrawer

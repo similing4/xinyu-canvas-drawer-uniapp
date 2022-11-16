@@ -423,6 +423,7 @@
 					if (this.getImageHashRenderjs(src))
 						return recv(this.getImageHashRenderjs(src));
 					const img = new Image();
+					img.setAttribute("crossOrigin", 'anonymous');
 					this.setImageHashRenderjs(src, img);
 					img.onload = () => {
 						recv(img);

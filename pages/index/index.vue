@@ -31,7 +31,7 @@
 			this.src = await posterRef
 				.setBackgroundColor("#F4F4F4") //指定渲染图片的背景色
 				.addRect(0, 0, 750, 198, "#FEFEFE") //绘制矩形
-				.addImage(require("@/static/logo.jpg"), 32, 48, 98, 98,
+				.addImage("https://yun.irenzhi.cn/2019_04_12/4_1555032690_b68968c38291a1255ac00c52cfcbbc98_0.png", 32, 48, 98, 98,
 				true) //绘制圆图片，如果不绘制圆图片最后一个参数可以不传或传false，当最后一个参数为true时圆形的直径为w，h参数将没有意义
 				.addQRCode("http://www.shengxinyustudio.com", 585, 22, 130, 130) //绘制二维码（不要太长否则会扫不出来）
 				.addText("扫码查看我的主页", 581, 159, 20, "#333333") //绘制文本

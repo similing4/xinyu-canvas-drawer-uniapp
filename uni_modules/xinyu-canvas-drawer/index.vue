@@ -28,8 +28,6 @@
 			return {
 				widthTemp: 255,
 				heightTemp: 255,
-				canvas: null, //当前canvas对象在组件加载成功后会自动赋值。
-				canvas_temp: null,
 				backgroundColor: "", //背景色，请使用setBackgroundColor方法设置。如果该值为空，则表示该canvas没有画背景色。
 				waitingList: [] //所有待渲染数据。只有在调用draw方法时才会进行渲染。
 			};
@@ -404,7 +402,7 @@
 			saveImageToPhotosAlbum(src) {
 				// #ifndef H5
 				return new Promise(async (recv, recj) => {
-					// #ifdef MP-WEIXIN
+					// #ifdef MP
 					if (src.startsWith("data:image")) {
 						let base64 = src.substring(src.indexOf(",") + 1);
 						let tmpFile = wx.env.USER_DATA_PATH + "/" + Date.now() + ".png";

@@ -58,8 +58,6 @@
 				renderjsContextProp: null,
 				renderjsContextMethodCall: null,
 				renderJSLoadImage: null,
-				canvas: null,
-				context: null,
 				inited: false,
 				recvMethod: {},
 				imageHash: [],

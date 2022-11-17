@@ -8,7 +8,7 @@
 				@touchstart="onTouch('start', $event)" @touchmove="onTouch('move', $event)"
 				@touchend="onTouch('end', $event)" :id="id" @ready="onCanvasInitReadyAlipay"></canvas>
 			<!-- #endif -->
-			<!-- #ifdef MP-WEIXIN -->
+			<!-- #ifdef MP-WEIXIN || MP-TOUTIAO -->
 			<canvas type="2d" :disable-scroll="true"
 				:style="{width: styleWidth == -1 ? rpx(750) : rpx(styleWidth),height: styleHeight == -1 ? '100vh' : rpx(styleWidth)}"
 				@touchstart="onTouch('start', $event)" @touchmove="onTouch('move', $event)"
@@ -75,7 +75,7 @@
 			this.imageHash = [];
 			this.refreshRenderJS();
 			this.renderJSMountedEvent = true;
-			// #ifdef MP-WEIXIN
+			// #ifdef MP-WEIXIN || MP-TOUTIAO
 			await this.onCanvasInitReady();
 			this.inited = true;
 			// #endif

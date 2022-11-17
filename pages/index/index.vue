@@ -63,8 +63,11 @@
 				if (!this.isCanvasLoading)
 					return this.alert("稍安勿躁，图片还没有加载完哦~");
 				let posterRef = this.$refs.poster;
-				posterRef.saveImageToPhotosAlbum(this.src);
-				this.alert("保存成功"); 
+				posterRef.saveImageToPhotosAlbum(this.src).then(()=>{
+					this.alert("保存成功"); 
+				}).catch((e)=>{
+					this.alert("保存失败：" + JSON.stringify(e));
+				});
 			}
 		}
 	}

@@ -45,6 +45,11 @@
 			async init() {
 				let canvas = this.$refs.CANVAS_DRAWER;
 				let canvasTemp = this.$refs.CANVAS_DRAWER_TEMP;
+				while (!(canvas && canvasTemp)) { //兼容字节跳动小程序
+					canvas = this.$refs.CANVAS_DRAWER;
+					canvasTemp = this.$refs.CANVAS_DRAWER_TEMP;
+					await new Promise((recv) => setTimeout(recv, 200));
+				}
 				await canvas.init();
 				await canvasTemp.init();
 				this.canvas = canvas;
@@ -404,7 +409,15 @@
 					// #ifdef MP
 					if (src.startsWith("data:image")) {
 						let base64 = src.substring(src.indexOf(",") + 1);
+						// #ifdef MP-WEIXIN
 						let tmpFile = wx.env.USER_DATA_PATH + "/" + Date.now() + ".png";
+						// #endif
+						// #ifdef MP-ALIPAY
+						let tmpFile = my.env.USER_DATA_PATH + "/" + Date.now() + ".png";
+						// #endif
+						// #ifdef MP-TOUTIAO
+						let tmpFile = tt.env.USER_DATA_PATH + "/" + Date.now() + ".png";
+						// #endif
 						await new Promise((recv1) => {
 							uni.getFileSystemManager().writeFile({
 								filePath: tmpFile,

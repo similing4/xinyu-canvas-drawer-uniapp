@@ -14,6 +14,14 @@
      	{
      		"launchtype" : "local"
      	},
+     	"mp-qq" : 
+     	{
+     		"launchtype" : "local"
+     	},
+     	"mp-toutiao" : 
+     	{
+     		"launchtype" : "local"
+     	},
      	"mp-weixin" : 
      	{
      		"launchtype" : "local"

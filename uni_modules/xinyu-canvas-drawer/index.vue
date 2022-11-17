@@ -314,7 +314,6 @@
 				let list = [];
 				for (let wid = 0; wid < this.waitingList.length; wid++) {
 					let item = this.waitingList[wid];
-					console.log(item);
 					if (item.type == "image") {
 						let ret = JSON.parse(JSON.stringify(item));
 						if (ret.data.isRound) {
@@ -385,7 +384,6 @@
 							.data.h
 						]);
 					} else if (item.type == "qrcode") {
-						console.log("test", item.data.image, item.data.x, item.data.y, item.data.w, item.data.h);
 						await this.canvas.callContextMethod('drawImage', [item.data.image, item.data.x, item.data.y,
 							item.data.w, item.data.h
 						]);

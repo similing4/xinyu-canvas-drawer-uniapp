@@ -1,9 +1,9 @@
 <template>
-	<view>
+	<view class="CANVAS_DRAWER">
 		<xinyu-cross-canvas :width.sync="widthTemp" :height.sync="heightTemp" :styleWidth="widthTemp"
-			:styleHeight="heightTemp" ref="CANVAS_DRAWER_TEMP" class="CANVAS_DRAWER"></xinyu-cross-canvas>
+			:styleHeight="heightTemp" id="CANVAS_DRAWER_TEMP" ref="CANVAS_DRAWER_TEMP"></xinyu-cross-canvas>
 		<xinyu-cross-canvas :width.sync="width" :height.sync="height" :styleWidth="width" :styleHeight="height"
-			ref="CANVAS_DRAWER" class="CANVAS_DRAWER"></xinyu-cross-canvas>
+			id="CANVAS_DRAWER" ref="CANVAS_DRAWER"></xinyu-cross-canvas>
 	</view>
 </template>
 <script>
@@ -385,6 +385,7 @@
 							.data.h
 						]);
 					} else if (item.type == "qrcode") {
+						console.log("test", item.data.image, item.data.x, item.data.y, item.data.w, item.data.h);
 						await this.canvas.callContextMethod('drawImage', [item.data.image, item.data.x, item.data.y,
 							item.data.w, item.data.h
 						]);

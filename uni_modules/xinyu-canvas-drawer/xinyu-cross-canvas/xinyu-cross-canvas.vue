@@ -6,13 +6,13 @@
 			<canvas type="2d" :disable-scroll="true"
 				:style="{width: styleWidth == -1 ? rpx(750) : rpx(styleWidth),height: styleHeight == -1 ? '100vh' : rpx(styleWidth)}"
 				@touchstart="onTouch('start', $event)" @touchmove="onTouch('move', $event)"
-				@touchend="onTouch('end', $event)" id="xinyu_cross_canvas" @ready="onCanvasInitReadyAlipay"></canvas>
+				@touchend="onTouch('end', $event)" :id="id" @ready="onCanvasInitReadyAlipay"></canvas>
 			<!-- #endif -->
 			<!-- #ifdef MP-WEIXIN -->
 			<canvas type="2d" :disable-scroll="true"
 				:style="{width: styleWidth == -1 ? rpx(750) : rpx(styleWidth),height: styleHeight == -1 ? '100vh' : rpx(styleWidth)}"
 				@touchstart="onTouch('start', $event)" @touchmove="onTouch('move', $event)"
-				@touchend="onTouch('end', $event)" id="xinyu_cross_canvas"></canvas>
+				@touchend="onTouch('end', $event)" :id="id"></canvas>
 			<!-- #endif -->
 			<!-- #ifndef MP -->
 			<view :renderjs_data="renderjsContextProp" :change:renderjs_data="xinyucrosscanvas.setContextPropRenderjs">
@@ -34,6 +34,10 @@
 <script>
 	export default {
 		props: {
+			id: {
+				type: String,
+				default: "xinyu_cross_canvas"
+			},
 			styleWidth: {
 				type: Number,
 				default: -1
@@ -60,7 +64,6 @@
 				renderJSLoadImage: null,
 				inited: false,
 				recvMethod: {},
-				imageHash: [],
 				currentGenerateIndex: 0,
 				downXY: {
 					x: 0,
@@ -69,6 +72,7 @@
 			};
 		},
 		async mounted() {
+			this.imageHash = [];
 			this.refreshRenderJS();
 			this.renderJSMountedEvent = true;
 			// #ifdef MP-WEIXIN
@@ -218,7 +222,7 @@
 				await new Promise((recv) => {
 					uni.createSelectorQuery()
 						.in(this)
-						.select("#xinyu_cross_canvas")
+						.select("#" + this.id)
 						.fields({
 							node: true,
 							size: true
@@ -234,9 +238,9 @@
 			},
 			async onCanvasInitReadyAlipay() {
 				await new Promise((recv) => {
-					uni.createSelectorQuery()
+					my.createSelectorQuery()
 						.in(this)
-						.select("#xinyu_cross_canvas")
+						.select("#" + this.id)
 						.node()
 						.exec((res) => {
 							this.canvas = res[0].node;

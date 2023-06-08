@@ -460,6 +460,10 @@
 						this.contextRenderJS.fillStyle = rectList[i].fillStyle;
 						this.contextRenderJS.fillRect(rectList[i].x, rectList[i].y, rectList[i].w, rectList[i].h);
 					}
+				} else if (prop.methodName == "measureText") {
+					ret = {
+						width: this.contextRenderJS.measureText(prop.methodParams[0]).width
+					};
 				} else
 					ret = this.contextRenderJS[prop.methodName].apply(this.contextRenderJS, prop.methodParams);
 				this.$ownerInstance.callMethod("onRenderCallback", {
